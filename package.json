@@ -1,17 +1,25 @@
 {
-  "name": "audo-framework",
+  "name": "audo",
   "version": "1.0.0",
-  "description": "",
+  "description": "Audo backend framework",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "commonjs",
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "clean": "rm -rf dist"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "audo",
+    "utility",
+    "node",
+    "typescript",
+    "framework"
+  ],
+  "author": "Bruce Audo",
+  "license": "MIT",
   "devDependencies": {
     "@types/node": "^24.0.10",
     "ts-node": "^10.9.2",
