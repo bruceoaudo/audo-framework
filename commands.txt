@@ -1,0 +1,11 @@
+# Compile TypeScript
+npm run build
+
+# Run compiled JavaScript
+npm start
+
+# Run TS directly (no build needed)
+npm run dev
+
+# Clean build output
+npm run clean
