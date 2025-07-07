@@ -1,8 +1,9 @@
 import { audo, Options } from "./audo";
+import { Router } from "./routes";
 
 //=====================================================//
 // Exported modules (Both ES6 and CommonJS modules)
 //=====================================================//
-export { audo, Options };
+export { audo, Options, Router };
 
-module.exports = { audo };
+module.exports = { audo, Router };

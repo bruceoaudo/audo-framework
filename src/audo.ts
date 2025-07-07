@@ -6,10 +6,12 @@ import cluster from "node:cluster";
 import { cpus } from "node:os";
 import { RateLimiter } from "./rateLimiter";
 import { Router } from "./routes";
+import { audoRequest } from "./global";
 
 //========================================//
 // Interfaces
 //========================================//
+
 export interface Options {
   // Performance options
   keepAlive?: boolean;
@@ -139,7 +141,6 @@ export class audo extends Router {
         // Apply security headers
         this.applySecurityHeaders(res, options);
 
-        // Handle request
         let body = "";
 
         req.on("data", (chunk) => {
@@ -148,75 +149,50 @@ export class audo extends Router {
 
         req.on("end", () => {
           const method = (req.method || "GET").toUpperCase();
-          const path = (req.url || "/").split("?")[0];  // Path withput query params
+          const url = new URL(req.url || "/", `http://${req.headers.host}`);
+          const path = url.pathname;
 
-          let parsedBody: any = {};
-          try {
-            parsedBody = JSON.parse(body);
-          } catch (err) {
-            // Ignore or handle malformed body
+          // Cast and enrich IncomingMessage
+          const enrichedReq = req as audoRequest;
+
+          // Parse query string
+          const query: Record<string, string | string[]> = {};
+          for (const [key, value] of url.searchParams.entries()) {
+            if (query[key]) {
+              if (Array.isArray(query[key])) {
+                (query[key] as string[]).push(value);
+              } else {
+                query[key] = [query[key] as string, value];
+              }
+            } else {
+              query[key] = value;
+            }
+          }
+          enrichedReq.query = query;
+
+          // Only parse body if content-type is JSON
+          const contentType = req.headers["content-type"] || "";
+          if (contentType.includes("application/json")) {
+            try {
+              enrichedReq.body = JSON.parse(body || "{}");
+            } catch {
+              enrichedReq.body = {};
+            }
+          } else {
+            enrichedReq.body = {};
           }
 
-          // Route handling logic goes here
-          switch (method) {
-            case "GET": {
-              const getCallback = this.routes.get.get(path);
-              if (!getCallback) {
-                res.writeHead(404, "URL Endpoint not found");
-                res.end();
-                return;
-              }
-              getCallback(req, res);
-              return;
-            }
+          // Handle routes
+          const methodRoutes =
+            this.routes[method.toLowerCase() as keyof typeof this.routes];
+          const { handler, params } = matchRoute(path, methodRoutes);
+          enrichedReq.params = params;
 
-            case "POST": {
-              const postCallback = this.routes.post.get(path);
-              if (!postCallback) {
-                res.writeHead(404, "URL Endpoint not found");
-                res.end();
-                return;
-              }
-              postCallback(req, res);
-              return;
-            }
-
-            case "DELETE": {
-              const deleteCallback = this.routes.delete.get(path);
-              if (!deleteCallback) {
-                res.writeHead(404, "URL Endpoint not found");
-                res.end();
-                return;
-              }
-              deleteCallback(req, res);
-              return;
-            }
-
-            case "PUT": {
-              const putCallback = this.routes.put.get(path);
-              if (!putCallback) {
-                res.writeHead(404, "URL Endpoint not found");
-                res.end();
-                return;
-              }
-              putCallback(req, res);
-              return;
-            }
-
-            case "UPDATE": {
-              const updateCallback = this.routes.update.get(path);
-              if (!updateCallback) {
-                res.writeHead(404, "URL Endpoint not found");
-                res.end();
-                return;
-              }
-              updateCallback(req, res);
-              return;
-            }
-
-            default:
-              res.writeHead(404, "URL Endpoint not found");
-              res.end();
+          if (handler) {
+            handler(enrichedReq, res);
+          } else {
+            res.writeHead(404, "URL Endpoint not found");
+            res.end();
           }
         });
       }
@@ -361,4 +337,35 @@ export class audo extends Router {
 
     console.log("Cleanup completed");
   }
+}
+
+function matchRoute(
+  path: string,
+  routes: Map<string, Function>
+): { handler?: Function; params: Record<string, string> } {
+  for (const [pattern, handler] of routes.entries()) {
+    const patternParts = pattern.split("/").filter(Boolean);
+    const pathParts = path.split("/").filter(Boolean);
+
+    if (patternParts.length !== pathParts.length) continue;
+
+    const params: Record<string, string> = {};
+    let matched = true;
+
+    for (let i = 0; i < patternParts.length; i++) {
+      const p = patternParts[i];
+      const actual = pathParts[i];
+
+      if (p.startsWith(":")) {
+        params[p.slice(1)] = decodeURIComponent(actual);
+      } else if (p !== actual) {
+        matched = false;
+        break;
+      }
+    }
+
+    if (matched) return { handler, params };
+  }
+
+  return { handler: undefined, params: {} };
 }
