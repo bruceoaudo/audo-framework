@@ -7,34 +7,7 @@ import { cpus } from "node:os";
 import { RateLimiter } from "./rateLimiter";
 import { Router } from "./routes";
 import { audoRequest } from "./global";
-
-//========================================//
-// Interfaces
-//========================================//
-
-export interface Options {
-  // Performance options
-  keepAlive?: boolean;
-  keepAliveTimeout?: number;
-  maxConnections?: number;
-  timeout?: number;
-  useCluster?: boolean;
-
-  // Security options
-  maxHeadersCount?: number;
-  rateLimit?: {
-    windowMs: number;
-    max: number;
-    message?: string;
-    statusCode?: number;
-  };
-  disablePoweredBy?: boolean;
-  strictTransportSecurity?: boolean | string;
-  contentSecurityPolicy?: string;
-  xssProtection?: boolean | string;
-  frameOptions?: string;
-  contentTypeOptions?: boolean;
-}
+import { Options } from "./types";
 
 //========================================//
 // Main Server Class
@@ -369,3 +342,5 @@ function matchRoute(
 
   return { handler: undefined, params: {} };
 }
+export { Options };
+

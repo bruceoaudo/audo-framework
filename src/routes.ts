@@ -1,17 +1,10 @@
 import * as http from "node:http";
 import { audoRequest } from "./global";
+import { Routes } from "./types";
 
 // Example usage
 // const router = Router()
 // router.post("/", (req, res)=>{})
-
-interface Routes {
-  post: Map<string, (req: audoRequest, res: http.ServerResponse) => void>;
-  get: Map<string, (req: audoRequest, res: http.ServerResponse) => void>;
-  put: Map<string, (req: audoRequest, res: http.ServerResponse) => void>;
-  update: Map<string, (req: audoRequest, res: http.ServerResponse) => void>;
-  delete: Map<string, (req: audoRequest, res: http.ServerResponse) => void>;
-}
 
 export class Router {
   protected routes: Routes;
