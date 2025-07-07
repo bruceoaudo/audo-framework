@@ -28,7 +28,7 @@ interface Routes {
 }
 
 export class Router {
-  private routes: Routes;
+  protected routes: Routes;
   constructor() {
     this.routes = {
       post: new Map(),

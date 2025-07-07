@@ -139,8 +139,86 @@ export class audo extends Router {
         // Apply security headers
         this.applySecurityHeaders(res, options);
 
-        // Request handling logic
-        
+        // Handle request
+        let body = "";
+
+        req.on("data", (chunk) => {
+          body += chunk;
+        });
+
+        req.on("end", () => {
+          const method = (req.method || "GET").toUpperCase();
+          const path = (req.url || "/").split("?")[0];  // Path withput query params
+
+          let parsedBody: any = {};
+          try {
+            parsedBody = JSON.parse(body);
+          } catch (err) {
+            // Ignore or handle malformed body
+          }
+
+          // Route handling logic goes here
+          switch (method) {
+            case "GET": {
+              const getCallback = this.routes.get.get(path);
+              if (!getCallback) {
+                res.writeHead(404, "URL Endpoint not found");
+                res.end();
+                return;
+              }
+              getCallback(req, res);
+              return;
+            }
+
+            case "POST": {
+              const postCallback = this.routes.post.get(path);
+              if (!postCallback) {
+                res.writeHead(404, "URL Endpoint not found");
+                res.end();
+                return;
+              }
+              postCallback(req, res);
+              return;
+            }
+
+            case "DELETE": {
+              const deleteCallback = this.routes.delete.get(path);
+              if (!deleteCallback) {
+                res.writeHead(404, "URL Endpoint not found");
+                res.end();
+                return;
+              }
+              deleteCallback(req, res);
+              return;
+            }
+
+            case "PUT": {
+              const putCallback = this.routes.put.get(path);
+              if (!putCallback) {
+                res.writeHead(404, "URL Endpoint not found");
+                res.end();
+                return;
+              }
+              putCallback(req, res);
+              return;
+            }
+
+            case "UPDATE": {
+              const updateCallback = this.routes.update.get(path);
+              if (!updateCallback) {
+                res.writeHead(404, "URL Endpoint not found");
+                res.end();
+                return;
+              }
+              updateCallback(req, res);
+              return;
+            }
+
+            default:
+              res.writeHead(404, "URL Endpoint not found");
+              res.end();
+          }
+        });
       }
     );
   }
